@@ -60,5 +60,5 @@ This project is a rebuilt, highly-optimized landing page for [Propsoch](https://
 *   **Icons**: Lucide React
 
 ## Submission Links
-*   **GitHub Repo**: (User to fill in with remote URL)
-*   **Deployed Site**: (User to deploy to Vercel/Netlify)
+*   **GitHub Repo**: https://github.com/poojitha1417/Propsoch
+*   **Deployed Site**: (Please insert your Vercel/Netlify URL here once deployed)
