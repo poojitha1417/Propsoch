@@ -117,8 +117,29 @@ async def _evaluate_notification(event: NotificationEvent, redis_client: aioredi
             audit_id=audit_id
         )
 
-    # Step 7: Final Catch-All / Contextual Rules
-    # If promotional and user is offline, defer. (Requires session state in Redis)
+    # Step 7: Contextual Rules
+    
+    # 7A. Promotional Events Handling
+    # Defer marketing/promo messages to optimal engagement hours (e.g., defer until 10:00 UTC)
+    if event.event_type.lower() in ["promo", "promotion", "marketing"]:
+        now = datetime.datetime.utcnow()
+        if now.hour < 10 or now.hour >= 20: # Outside of 10 AM - 8 PM optimal window
+            scheduled_time = now.replace(hour=10, minute=0, second=0, microsecond=0)
+            if now.hour >= 20:
+                scheduled_time += datetime.timedelta(days=1)
+            return DecisionResult(
+                decision="Later", 
+                reason="Promotional events are deferred to optimal business hours", 
+                scheduled_for=scheduled_time, 
+                audit_id=audit_id
+            )
+
+    # 7B. Reminders Handling
+    # If it's a reminder and it expires within 2 hours, rush it to Now
+    if event.event_type.lower() == "reminder" and event.expires_at:
+        time_to_expiry = event.expires_at.replace(tzinfo=None) - datetime.datetime.utcnow()
+        if datetime.timedelta(0) < time_to_expiry < datetime.timedelta(hours=2):
+            return DecisionResult(decision="Now", reason="Urgent reminder nears expiration", audit_id=audit_id)
 
     # If it passes all rules, increment fatigue cap and return Now
     await increment_fatigue_counter(event.user_id, redis_client)

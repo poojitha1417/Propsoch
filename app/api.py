@@ -94,10 +94,44 @@ async def update_user_preferences(user_id: str, prefs: dict, request: Request):
     return {"status": "success", "updated": prefs}
 
 @app.get("/v1/metrics/decisions")
-async def get_decision_metrics():
-    """Returns metrics for Now/Later/Never for the last hour."""
-    return {
-        "Now": 10520,
-        "Later": 3411,
-        "Never": 892
-    }
+async def get_decision_metrics(request: Request):
+    """Returns real-time metrics for Now/Later/Never for the last 24 hours."""
+    pool = request.app.state.db_pool
+    
+    # Defaults just in case
+    metrics = {"Now": 0, "Later": 0, "Never": 0}
+    
+    try:
+        async with pool.acquire() as conn:
+            # Get decisions made in the last 24 hours
+            rows = await conn.fetch("""
+                SELECT decision, COUNT(*) as count 
+                FROM audit_logs 
+                WHERE created_at >= NOW() - INTERVAL '24 hours'
+                GROUP BY decision
+            """)
+            for row in rows:
+                if row['decision'] in metrics:
+                    metrics[row['decision']] = row['count']
+    except Exception as e:
+        print(f"Error fetching metrics: {e}")
+        
+    return metrics
+
+@app.get("/v1/logs/audit")
+async def get_audit_logs(request: Request, limit: int = 10):
+    """Returns the most recent decision audit logs to explain WHY decisions were made."""
+    pool = request.app.state.db_pool
+    
+    try:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT audit_id, user_id, event_type, decision, reason, scheduled_for, created_at
+                FROM audit_logs
+                ORDER BY created_at DESC
+                LIMIT $1
+            """, limit)
+            
+            return [dict(row) for row in rows]
+    except Exception as e:
+        return {"error": f"Failed to fetch logs: {str(e)}"}

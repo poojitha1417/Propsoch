@@ -67,3 +67,22 @@ We implement a **Token Bucket** or **Sliding Window** rate limit per user in Red
 - **Volume Metrics**: Events Ingestion Rate, Decision Breakdown (Count of Now/Later/Never), Delivery Latency.
 - **System Health**: Redis hit/miss ratios, PostgreSQL write latency for audit logs, API p99 latency (< 100ms goal).
 - **Business Metrics**: User unsubscription rate (helps measure if alert fatigue strategy is working), Deduplication drop percentage.
+
+## AI-Native Enhancements Roadmap
+To evolve this rules-based engine into a fully AI-native system, the following architectural upgrades can be implemented:
+
+1. **Semantic Deduplication via Vector Embeddings**
+   - *Current*: `MD5` hashing catches exact string matches.
+   - *AI-Native*: Embed incoming notification text using lightweight models (e.g., `text-embedding-3-small` or local `all-MiniLM-L6-v2`) and store them in a vector database (e.g., Pinecone, Qdrant, or `pgvector` in PostgreSQL). Calculate cosine similarity against recent events to drop semantically identical alerts (e.g., "Server is down" vs "The server has crashed").
+   
+2. **Predictive Delivery Timing (ML Inference)**
+   - *Current*: Hardcoded Optimal Business Hours (10:00 - 20:00).
+   - *AI-Native*: Train a predictive model on the `audit_logs` and historical engagement data (when did the user click/read?) to predict the optimal minute to send a `Later` notification. Pass the timestamp back to the Message Broker delay queue.
+
+3. **Dynamic Alert Fatigue Thresholds**
+   - *Current*: Static cap of 10 messages per day.
+   - *AI-Native*: Implement an anomaly detection algorithm that watches a user's engagement rate. If they ignore 5 notifications in a row, the AI agent automatically lowers their daily cap to 3 to prevent churn.
+
+4. **Context-Aware Priority Scoring (LLM Evaluation)**
+   - *Current*: Relies on upstream services sending `priority_hint = "urgent"`.
+   - *AI-Native*: For events lacking a priority hint, utilize a fast, small LLM (e.g., Llama 3 8B) to infer the urgency and tonality of the `message` content in real-time before making a Now/Later/Never decision.

@@ -1,0 +1,102 @@
+### Notification Engine API - Demo Scenarios
+### Use this file with VS Code REST Client extension, or copy the JSON payloads into Swagger UI (http://127.0.0.1:8000/docs)
+
+@baseUrl = http://127.0.0.1:8000
+@userId = demo-user-123
+
+### 1. The Standard Alert (Should return "Now")
+# A normal priority event that passes all rules.
+POST {{baseUrl}}/v1/events/ingest
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "event_type": "alert",
+  "message": "Your server CPU is at 80%",
+  "source": "datadog",
+  "priority_hint": "normal",
+  "channel": "push",
+  "dedupe_key": "cpu-alert-80-v1"
+}
+
+###
+
+### 2. The Duplicate Event (Should return "Never")
+# Sending the exact same payload with the identical dedupe_key within 24 hours.
+POST {{baseUrl}}/v1/events/ingest
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "event_type": "alert",
+  "message": "Your server CPU is at 80%",
+  "source": "datadog",
+  "priority_hint": "normal",
+  "channel": "push",
+  "dedupe_key": "cpu-alert-80-v1"
+}
+
+###
+
+### 3. The Urgent Override (Should return "Now")
+# Even if the user is near their rate limit, urgent alerts bypass fatigue caps.
+POST {{baseUrl}}/v1/events/ingest
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "event_type": "security",
+  "message": "Multiple failed login attempts detected!",
+  "source": "auth0",
+  "priority_hint": "urgent",
+  "channel": "sms",
+  "dedupe_key": "sec-alert-login-v1"
+}
+
+### 
+
+### 4. The Promotional Event (Should return "Later" if outside 10am-8pm)
+# Marketing messages are automatically deferred to optimal engagement windows.
+POST {{baseUrl}}/v1/events/ingest
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "event_type": "promo",
+  "message": "Get 50% off your next subscription!",
+  "source": "marketing_crm",
+  "priority_hint": "low",
+  "channel": "email",
+  "dedupe_key": "promo-half-off-v1"
+}
+
+###
+
+### 5. The Expiring Reminder (Should return "Now")
+# A reminder that expires within 2 hours gets rushed to the user.
+POST {{baseUrl}}/v1/events/ingest
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "event_type": "reminder",
+  "message": "Your meeting starts in 30 minutes!",
+  "source": "calendar",
+  "priority_hint": "normal",
+  "channel": "push",
+  "dedupe_key": "meeting-remind-v1",
+  "expires_at": "2026-02-26T18:00:00Z" 
+}
+# NOTE: Adjust expires_at to be within 2 hours of your current time when demoing!
+
+###
+
+### 6. View Audit Logs
+# Fetch the recent decisions to see WHY the engine made its choices
+GET {{baseUrl}}/v1/logs/audit?limit=10
+
+###
+
+### 7. View Decision Metrics Dashboard
+# Get aggregated counts of Now vs Later vs Never
+GET {{baseUrl}}/v1/metrics/decisions
