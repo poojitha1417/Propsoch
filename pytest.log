@@ -1,0 +1,24 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\pooji\OneDrive\Desktop\AIML\Notification-Prioritization-Engine
+plugins: anyio-4.12.1
+collecting ... collected 3 items
+
+tests/test_api.py::test_ingest_urgent PASSED                             [ 33%]
+tests/test_api.py::test_ingest_duplicate PASSED                          [ 66%]
+tests/test_api.py::test_ingest_fatigue PASSED                            [100%]
+
+============================== warnings summary ===============================
+tests/test_api.py::test_ingest_urgent
+tests/test_api.py::test_ingest_duplicate
+tests/test_api.py::test_ingest_fatigue
+  C:\Users\pooji\AppData\Roaming\Python\Python313\site-packages\pydantic\type_adapter.py:441: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return self.validator.validate_python(
+
+tests/test_api.py::test_ingest_fatigue
+  C:\Users\pooji\OneDrive\Desktop\AIML\Notification-Prioritization-Engine\app\logic.py:44: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    today_str = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 3 passed, 4 warnings in 1.26s ========================
